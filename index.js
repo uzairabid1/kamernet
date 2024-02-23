@@ -12,7 +12,7 @@ const password = process.env.PASSWORD;
 
 //filters
 const city = "Eindhoven";
-const radius = '5';
+const radius = '2';
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(AnonymizeUAPlugin());
@@ -35,6 +35,7 @@ async function main(){
     await page.goto('https://kamernet.nl/en');
     page = await methods.login(page,username,password);
     page = await methods.applyFilters(page,city,radius);
+    page = await methods.visitListings(page);
 
 
 }
