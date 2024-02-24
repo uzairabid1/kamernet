@@ -35,7 +35,7 @@ async function main(){
     await page.goto('https://kamernet.nl/en');
     page = await methods.login(page,username,password);
     page = await methods.applyFilters(page,city,radius);
-    page = await methods.visitListings(page);
+    page = await methods.visitListings(page,username);
 
 
 }

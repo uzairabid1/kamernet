@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 
+const dbUtil = require('./dbUitl');
 
 function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
@@ -69,27 +70,47 @@ async function applyFilters(page, city, radius){
     return page;
 }
 
-async function getListings(page){
+async function getListings(page, username) {
 
-    // getting listing urls
-    let listings = [];
+    await dbUtil.setupDatabase();
 
-    await page.waitForSelector("a.ListingCard_root__xVYYt")
-    let listings_elements = await page.$$("a.ListingCard_root__xVYYt");
+    // Open a SQLite database (create it if not exists)
+    const db = new sqlite3.Database('listings.db');
 
-    for (let element of listings_elements){
-        let listingLink = await page.evaluate(element => element.getAttribute('href'),element);
-        listings.push("https://kamernet.nl/" + listingLink); 
+    // Create a table if it doesn't exist
+    db.run('CREATE TABLE IF NOT EXISTS listings (username TEXT, url TEXT PRIMARY KEY)');
+
+    // Getting new listing URLs
+    let newListings = [];
+
+    await page.waitForSelector("a.ListingCard_root__xVYYt");
+    let listingsElements = await page.$$("a.ListingCard_root__xVYYt");
+
+    for (let element of listingsElements) {
+        let listingLink = await page.evaluate(element => element.getAttribute('href'), element);
+        let fullUrl = "https://kamernet.nl/" + listingLink;
+
+        // Check if the listing is new for the specific user
+        const isExisting = await dbUtil.checkIfListingExists(db, username, fullUrl);
+
+        if (!isExisting) {
+            newListings.push(fullUrl);
+            await dbUtil.insertListing(db, username, fullUrl);
+        }
     }
-    console.log(listings);
-    return listings;
+
+    // Close the database connection
+    db.close();
+
+    console.log(newListings);
+    return newListings;
 }
 
 
-async function visitListings(page){   
+async function visitListings(page,username){   
 
     //visit listings
-    let listings = await getListings(page);
+    let listings = await getListings(page,username);
     for(let listing of listings){
         await page.goto(listing);
         await delay(2000);

@@ -1,3 +1,21 @@
+const sqlite3 = require('sqlite3').verbose();
+
+async function setupDatabase() {
+    // Open a SQLite database (create it if not exists)
+    const db = new sqlite3.Database('listings.db');
+
+    // Create a table if it doesn't exist
+    return new Promise((resolve, reject) => {
+        db.run('CREATE TABLE IF NOT EXISTS listings (username TEXT, url TEXT PRIMARY KEY)', (err) => {
+            db.close();
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
 
 
 async function checkIfListingExists(db, username, url) {
@@ -24,4 +42,4 @@ async function insertListing(db, username, url) {
     });
 }
 
-module.exports = {checkIfListingExists, insertListing};
+module.exports = {checkIfListingExists, insertListing, setupDatabase};
