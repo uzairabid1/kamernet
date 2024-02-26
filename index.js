@@ -16,7 +16,7 @@ const radius = '2';
 
 
 //react data
-const message = "FF";
+const message = "Hello, is this available?";
 const gender = "Male";
 const dob = "23-10-2002";
 const stay = "5";
