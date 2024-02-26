@@ -4,11 +4,11 @@ const dbUtil = require('./dbUitl');
 
 function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
-} 
+}
 
-async function login(page,username,password){
+async function login(page, username, password) {
 
-    try{
+    try {
         //click on login button
         await page.waitForXPath("//a[.='Log in']");
         const [loginButton] = await page.$x("//a[.='Log in']");
@@ -32,8 +32,8 @@ async function login(page,username,password){
         await delay(500);
         //filling in with username and password
         await page.waitForXPath("//input[@id='UserEmail']");
-        await page.type("#UserEmail",username,{delay:50});
-        await page.type("#LoginPassword",password,{delay:50});
+        await page.type("#UserEmail", username, { delay: 50 });
+        await page.type("#LoginPassword", password, { delay: 50 });
         await delay(1000);
         //clicking the submit button
         await page.waitForXPath("//button[.='Log in']");
@@ -43,14 +43,14 @@ async function login(page,username,password){
 
         console.log("Logged in");
         return page;
-    }catch(error){
+    } catch (error) {
         return false;
-    }     
+    }
 }
 
 
 
-async function applyFilters(page, city, radius){
+async function applyFilters(page, city, radius) {
 
     //get url and search
     const DISTANCE_INDEX = {
@@ -91,8 +91,8 @@ async function getListings(page, username) {
         let fullUrl = "https://kamernet.nl/" + listingLink;
 
         // Check if the listing is new for the specific user
-        const isExisting = await dbUtil.checkIfListingExists(db, username, fullUrl);
 
+        const isExisting = await dbUtil.checkIfListingExists(db, username, fullUrl);
         if (!isExisting) {
             newListings.push(fullUrl);
             await dbUtil.insertListing(db, username, fullUrl);
@@ -107,14 +107,182 @@ async function getListings(page, username) {
 }
 
 
-async function visitListings(page,username){   
+async function visitListings(page, username, message, gender, dob, stay, occupation, language, pets, expectDate, totalPeople) {
 
     //visit listings
-    let listings = await getListings(page,username);
-    for(let listing of listings){
+    let listings = await getListings(page, username);
+    for (let listing of listings) {
         await page.goto(listing);
         await delay(2000);
-    }   
+        
+        const [contactButton] = await page.$x("(//button[.='Contact landlord'])[1]");
+
+        if(!contactButton){
+            continue
+        }
+
+        await contactButton.evaluate(contactButton => contactButton.click());   
+        await delay(2000);
+        await react(page, message, gender, dob, stay, occupation, language, pets, expectDate, totalPeople)
+    }
 }
 
-module.exports = {login, applyFilters, visitListings};
+async function selectMessage(page,message){
+    //send message
+    await page.waitForXPath("//textarea[@id='Message']");
+    await page.type("#Message",message,{delay:30});
+}
+
+async function selectGender(page,gender){
+    //select gender
+    await page.waitForXPath("//span[.='Male']/parent::div");
+    if(gender == "Male"){
+        const [maleButton] = await page.$x("//span[.='Male']/parent::div");
+        await maleButton.evaluate(maleButton => maleButton.click());
+    }else if(gender == "Female"){
+        const [femaleButton] = await page.$x("//span[.='Female']/parent::div");
+        await femaleButton.evaluate(femaleButton => femaleButton.click());
+    }else{
+        const [notImportantButton] = await page.$x("//span[.='Not important']/parent::div");
+        await notImportantButton.evaluate(notImportantButton => notImportantButton.click());
+    }
+    await delay(1000);
+}
+
+async function selectDob(page,dob){
+
+    let [day, month, year] = dob.split('-').map(Number);
+    month = (month-1).toString().replace('0','').trim();
+    day = day.toString().replace('0','').trim();
+
+    await page.waitForXPath("//input[@id='DateOfBirth']");
+    const [dateButton] = await page.$x("//input[@id='DateOfBirth']");
+    await dateButton.evaluate(dateButton => dateButton.click());
+    await delay(1000);
+
+    await page.waitForSelector('select[title="Select a year"]');
+    await page.select('select[title="Select a year"]',`${year}`);
+    await delay(500);
+
+    await page.waitForSelector('select[title="Select a month"]');
+    await page.select('select[title="Select a month"]',`${month}`);
+    await delay(500);
+
+    await page.waitForXPath(`//table[@id='DateOfBirth_table']/tbody/tr/td/div[.='${day}']`);
+    const [dayButton] = await page.$x(`//table[@id='DateOfBirth_table']/tbody/tr/td/div[.='${day}']`);
+    await dayButton.evaluate(dayButton => dayButton.click());    
+    await delay(500);
+}
+
+async function selectStay(page,stay){
+    await page.waitForSelector("div#ExpectedTenancyDuration>div>input");
+    const stayButton = await page.$("div#ExpectedTenancyDuration>div>input");
+    await stayButton.evaluate(stayButton => stayButton.click());
+    await delay(500);
+
+    await page.waitForSelector(`div#ExpectedTenancyDuration>div>ul>li:nth-child(${stay.toString()})`);
+    const monthButton = await page.$(`div#ExpectedTenancyDuration>div>ul>li:nth-child(${stay.toString()})`);
+    await monthButton.evaluate(monthButton => monthButton.click());
+    await delay(500);
+
+    await page.select('select[name="ExpectedTenancyDurationId"]',`${stay.toString()}`);
+
+    await stayButton.evaluate(stayButton => stayButton.click());
+    await delay(500);
+}
+
+async function selectOccupation(page,occupation){
+
+    await page.waitForSelector("div#Status>div>input");
+    const occupationButton = await page.$("div#Status>div>input");
+    await occupationButton.evaluate(occupationButton => occupationButton.click());
+    await delay(500);
+
+    await page.waitForSelector(`div#Status>div>ul>li:nth-child(${occupation.toString()})`);
+    const selectOccupation = await page.$(`div#Status>div>ul>li:nth-child(${occupation.toString()})`);
+    await selectOccupation.evaluate(selectOccupation => selectOccupation.click());
+    await delay(500);
+
+    await occupationButton.evaluate(occupationButton => occupationButton.click());
+    await delay(500);
+
+}
+
+async function selectLanguages(page,languages){
+    
+    
+    let languages_arr = languages.split(",");
+    await page.waitForSelector("div#Languages>div>span>input:nth-child(2)");
+    const input = await page.$("div#Languages>div>span>input:nth-child(2)");
+    await input.click();
+    await page.keyboard.press('Backspace');
+
+    for(let language of languages_arr){
+        await page.type("div#Languages>div>span>input:nth-child(2)",`${language}`,{delay:50});
+        await page.keyboard.press("Enter");
+        await delay(1000);
+    }
+    
+}
+
+
+async function selectPets(page,pets){
+    await page.waitForXPath("//span[.='Yes']/parent::div");
+
+    if(pets == "Yes"){
+        const [petsYesButton] = await page.$x("//span[.='Yes']/parent::div");
+        await petsYesButton.evaluate(petsYesButton => petsYesButton.click());
+    }else{
+        const [petsNoButton] = await page.$x("//span[.='No']/parent::div");
+        await petsNoButton.evaluate(petsNoButton => petsNoButton.click());
+    }
+    await delay(1000);
+}
+
+async function selectExpectDate(page,expectDate){
+    let [day, month, year] = expectDate.split('-').map(Number);
+    month = (month-1).toString().replace('0','').trim();
+    day = day.toString().replace('0','').trim();
+    
+    console.log(day,month,year);
+
+    await page.waitForXPath("//input[@id='ExpectedMoveInDate']");
+    const [dateButton] = await page.$x("//input[@id='ExpectedMoveInDate']");
+    await dateButton.evaluate(dateButton => dateButton.click());
+    await delay(1000);
+
+    await page.waitForSelector("div>select[aria-controls='ExpectedMoveInDate_table']:nth-child(2)");
+    await page.select("div>select[aria-controls='ExpectedMoveInDate_table']:nth-child(2)",`${year}`);
+    await delay(500);
+
+    await page.waitForSelector("div>select[aria-controls='ExpectedMoveInDate_table']:nth-child(1)");
+    await page.select("div>select[aria-controls='ExpectedMoveInDate_table']:nth-child(1)",`${month}`);
+    await delay(500);
+
+    await page.waitForXPath(`//table[@id='ExpectedMoveInDate_table']/tbody/tr/td/div[.='${day}']`);
+    const [dayButton] = await page.$x(`//table[@id='ExpectedMoveInDate_table']/tbody/tr/td/div[.='${day}']`);
+    await dayButton.evaluate(dayButton => dayButton.click());    
+    await delay(500);
+}
+
+async function selectPeopleMovingIn(page,totalPeople){
+    await page.waitForSelector("input#PeopleMovingIn");
+    await page.type("input#PeopleMovingIn",`${totalPeople.toString()}`);
+    await delay(20000);
+}
+
+async function react(page, message, gender, dob, stay, occupation, languages, pets, expectDate, totalPeople) {
+
+    await selectMessage(page,message);
+    await selectGender(page,gender);
+    await selectDob(page,dob);
+    await selectStay(page,stay);
+    await selectOccupation(page,occupation);
+    await selectLanguages(page,languages);
+    await selectPets(page,pets);
+    await selectExpectDate(page,expectDate);
+    await selectPeopleMovingIn(page,totalPeople);      
+
+}
+
+module.exports = { login, applyFilters, visitListings };

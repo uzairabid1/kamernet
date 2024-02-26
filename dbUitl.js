@@ -6,7 +6,7 @@ async function setupDatabase() {
 
     // Create a table if it doesn't exist
     return new Promise((resolve, reject) => {
-        db.run('CREATE TABLE IF NOT EXISTS listings (username TEXT, url TEXT PRIMARY KEY)', (err) => {
+        db.run('CREATE TABLE IF NOT EXISTS listings (username TEXT, url TEXT)', (err) => {
             db.close();
             if (err) {
                 reject(err);
@@ -31,14 +31,20 @@ async function checkIfListingExists(db, username, url) {
 }
 
 async function insertListing(db, username, url) {
-    return new Promise((resolve, reject) => {
-        db.run('INSERT INTO listings (username, url) VALUES (?, ?)', [username, url], (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
+    return new Promise(async (resolve, reject) => {
+        const isExisting = await checkIfListingExists(db, username, url);
+
+        if (!isExisting) {
+            db.run('INSERT INTO listings (username, url) VALUES (?, ?)', [username, url], (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        } else {
+            resolve(); // URL already exists, resolve without inserting
+        }
     });
 }
 
