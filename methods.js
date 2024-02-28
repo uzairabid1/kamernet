@@ -123,7 +123,7 @@ async function visitListings(page, username, message, gender, dob, stay, occupat
 
         await contactButton.evaluate(contactButton => contactButton.click());
         await delay(2000);
-        await react(page, message, gender, dob, stay, occupation, language, pets, expectDate, totalPeople)
+        await react(page, message, gender, dob, stay, occupation, language, pets, expectDate, totalPeople);
     }
 }
 
@@ -180,12 +180,14 @@ async function selectStay(page, stay) {
     await stayButton.evaluate(stayButton => stayButton.click());
     await delay(500);
 
+    await page.select('select[name="ExpectedTenancyDurationId"]', `${stay.toString()}`);
+    
     await page.waitForSelector(`div#ExpectedTenancyDuration>div>ul>li:nth-child(${stay.toString()})`);
     const monthButton = await page.$(`div#ExpectedTenancyDuration>div>ul>li:nth-child(${stay.toString()})`);
     await monthButton.evaluate(monthButton => monthButton.click());
     await delay(500);
 
-    await page.select('select[name="ExpectedTenancyDurationId"]', `${stay.toString()}`);
+    
 
     await stayButton.evaluate(stayButton => stayButton.click());
     await delay(500);
@@ -269,18 +271,18 @@ async function selectPeopleMovingIn(page, totalPeople) {
     const input = await page.$("input#PeopleMovingIn");
     await input.click();
     await page.keyboard.press('Backspace');
-    await delay(1000);
+    await delay(500);
 
     await page.waitForSelector("input#PeopleMovingIn");
     await page.type("input#PeopleMovingIn", `${totalPeople.toString()}`);
-    await delay(1000);
+    await delay(500);
 }
 
 async function sendMessage(page) {
     await page.waitForXPath("//button[.='Send message']");
     const [sendMessageButton] = await page.$x("//button[.='Send message']");
     await sendMessageButton.evaluate(sendMessageButton => sendMessageButton.click());
-    await delay(1000);
+    await delay(8000);
 }
 
 async function react(page, message, gender, dob, stay, occupation, languages, pets, expectDate, totalPeople) {
@@ -294,7 +296,7 @@ async function react(page, message, gender, dob, stay, occupation, languages, pe
     await selectPets(page, pets);
     await selectExpectDate(page, expectDate);
     await selectPeopleMovingIn(page, totalPeople);
-    // await sendMessage(page);
+    await sendMessage(page);
 
 }
 
