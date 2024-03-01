@@ -14,23 +14,7 @@ async function login(page, username, password) {
         await page.waitForXPath("//a[.='Log in']");
         const [loginButton] = await page.$x("//a[.='Log in']");
         await loginButton.evaluate(loginButton => loginButton.click());
-
-        //check for cookies
-        // await page.waitForSelector('#cookiesRequest');
-        // const cookieConsentPopup = await page.$('#cookiesRequest');
-
-        // if (cookieConsentPopup) {
-        //     console.log("Cookie consent popup found. Accepting cookies...");
-        //     // Assuming there's a button to accept cookies, replace 'button.accept-cookies' with the actual selector
-        //     await page.click('#_btnAcceptAllCookies');
-        // }
-
-        // await delay(500);
-        // //click on email field
-        // await page.waitForXPath("//div[@id='btnLoginEmail_inline']");
-        // const [emailChoiceButton] = await page.$x("//div[@id='btnLoginEmail_inline']");
-        // await emailChoiceButton.evaluate(emailChoiceButton => emailChoiceButton.click());
-        // await delay(500);
+        
         //filling in with username and password
         await page.waitForXPath("//input[@id='email']");
         await page.type("#email", username, { delay: 100 });
