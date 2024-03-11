@@ -10,14 +10,19 @@ async function login(page, username, password) {
 
     try {
         await delay(2000);
-        await page.waitForXPath("//button[.='Accept all']");
-        const [cookieButton] = await page.$x("//button[.='Accept all']");
-        await cookieButton.evaluate(cookieButton => cookieButton.click());
+        try{
+            // await page.waitForXPath("//button[.='Accept all']");
+            const [cookieButton] = await page.$x("//button[.='Accept all']");
+            await cookieButton.evaluate(cookieButton => cookieButton.click());
+            console.log('Cookie accepted');
+        }catch(err){
+            console.log('No cookies found')
+        }
         //click on login button
         await page.waitForXPath("//a[.='Log in']");
         const [loginButton] = await page.$x("//a[.='Log in']");
         await loginButton.evaluate(loginButton => loginButton.click());
-        
+
         //filling in with username and password
         await page.waitForXPath("//input[@id='email']");
         await page.type("#email", username, { delay: 100 });
@@ -32,8 +37,7 @@ async function login(page, username, password) {
         console.log("Logged in");
         return page;
     } catch (error) {
-        console.log(error)
-        return page;
+        return false;
     }
 }
 
