@@ -11,7 +11,7 @@ const username = process.env.USER_NAME;
 const password = process.env.PASSWORD;
 
 //filters
-const city = "Amsterdam";
+const city = "Den haag";
 const radius = '2';
 
 

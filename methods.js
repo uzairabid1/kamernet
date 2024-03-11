@@ -75,13 +75,24 @@ async function getListings(page, username) {
 
     // Getting new listing URLs
     let newListings = [];
-
-    await page.waitForSelector("a.ListingCard_root__xVYYt");
-    let listingsElements = await page.$$("a.ListingCard_root__xVYYt");
+    let listingsElements = [];
+    let newCheck = false;
+    try{
+        await page.waitForSelector("a.ListingCard_root__xVYYt");
+        listingsElements = await page.$$("a.ListingCard_root__xVYYt");
+    }catch(r){
+        listingsElements = await page.$$("div.tile-data>a");
+        newCheck = true;
+    }
 
     for (let element of listingsElements) {
         let listingLink = await page.evaluate(element => element.getAttribute('href'), element);
-        let fullUrl = "https://kamernet.nl/" + listingLink;
+        let fullUrl = '';
+        if(newCheck == false){
+            fullUrl = "https://kamernet.nl/" + listingLink;
+        }else{
+            fullUrl = listingLink;
+        }
 
         // Check if the listing is new for the specific user
 
