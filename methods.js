@@ -67,10 +67,7 @@ async function getListings(page, username) {
 
     await dbUtil.setupDatabase();
 
-    // Open a SQLite database (create it if not exists)
     const db = new sqlite3.Database('listings.db');
-
-    // Create a table if it doesn't exist
     db.run('CREATE TABLE IF NOT EXISTS listings (username TEXT, url TEXT PRIMARY KEY)');
 
     // Getting new listing URLs
