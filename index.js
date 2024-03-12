@@ -11,19 +11,19 @@ const username = process.env.USER_NAME;
 const password = process.env.PASSWORD;
 
 //filters
-const city = "Den haag";
+const city = "Eindhoven";
 const radius = '2';
 
 
 //react data
-const message = "Hello, is this available?";
-const gender = "Male";
-const dob = "23-10-2002";
+const message = "Hello, my name is Denitsa. Can I come for a viewing?";
+const gender = "Female";
+const dob = "23-10-2004";
 const stay = "5";
 const occupation = "2";
-const language = "English,Dutch";
-const pets  = "Yes";
-const expectDate = "08-05-2024";
+const language = "English";
+const pets  = "No";
+const expectDate = "20-03-2024";
 const totalPeople = 2;
 
 puppeteer.use(StealthPlugin());
